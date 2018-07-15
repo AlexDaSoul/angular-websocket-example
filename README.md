@@ -86,9 +86,9 @@ export class AppComponent implements OnInit {
 
     ngOnInit() {
         // get messages
-		this.messages$ = this.wsService.on<IMessage[]>(WS_API.EVENTS.MESSAGES);
-		// or
-		this.messages$ = this.wsService.on<IMessage[]>([WS_API.EVENTS.MESSAGES, WS_API.EVENTS.MESSAGES_NEW]);
+        this.messages$ = this.wsService.on<IMessage[]>(WS_API.EVENTS.MESSAGES);
+        // or
+        this.messages$ = this.wsService.on<IMessage[]>([WS_API.EVENTS.MESSAGES, WS_API.EVENTS.MESSAGES_NEW]);
     }
 
     public sendMessge(): void {
