@@ -2,8 +2,9 @@ import { Injectable, OnDestroy, Inject } from '@angular/core';
 import { Observable, Subject } from 'rxjs';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { sha256 } from 'js-sha256';
+import Dexie from 'dexie';
 
-import { ITopic, IWebsocketService, WebSocketConfig } from './websocket.interfaces';
+import { IMessage, ITopic, IWebsocketService, WebSocketConfig } from './websocket.interfaces';
 import { config } from './websocket.config';
 import { WS_API } from './websocket.events';
 import { modelParser } from './websocket.models';
@@ -98,10 +99,12 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
                 const topic = this.listeners[name];
                 const keys = name.split('/'); // if multiple events
                 const isMessage = keys.includes(message.event);
-                const data = modelParser(message); // get model
+                const model = modelParser(message); // get model
 
-                if (isMessage && typeof data !== 'undefined') {
-                    this.callMessage<any>(topic, data);
+                if (isMessage && typeof model !== 'undefined') {
+                    model.then(data => {
+                        this.callMessage<IMessage[] | number | string[]>(topic, data);
+                    });
                 }
             }
         }
