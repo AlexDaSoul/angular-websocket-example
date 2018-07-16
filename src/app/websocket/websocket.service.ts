@@ -61,6 +61,10 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             // dispatch message to subscribers
             this.onMessage(event);
         });
+
+        setInterval(() => {
+            this.garbageCollect(); // remove subjects without subscribe
+        }, (this.wsConfig.garbageCollectInterval || 10000));
     }
 
 
@@ -126,20 +130,27 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
 
 
     /*
-    * remove topic
+    * garbage collector
     * */
-    private removeTopic(topic: string, id?: number): void {
-        const token = (++this.uniqueId).toString(); // token for personal subject
-        const key = id ? token + id : token; // id for more personal subject
-        const hash = sha256.hex(key); // set hash for personal
+    private garbageCollect(): void {
+        for (const event in this.listeners) {
+            if (this.listeners.hasOwnProperty(event)) {
+                const topic = this.listeners[event];
 
-        if (this.listeners[topic][hash]) {
-            delete this.listeners[topic][hash];
-        } else {
-            // if not topic
-            const filterKey = Object.keys(WS_API.EVENTS).filter(k => WS_API.EVENTS[k] === topic)[0];
-            console.log(`[${Date()}] removeEventListener try's to unsubscribe
-            callback from event \ ${filterKey} \ but already unsubscribed.`);
+                for (const key in topic) {
+                    if (topic.hasOwnProperty(key)) {
+                        const subject = topic[key];
+
+                        if (!subject.observers.length) { // if not subscribes
+                            delete topic[key];
+                        }
+                    }
+                }
+
+                if (!Object.keys(topic).length) { // if not subjects
+                    delete this.listeners[event];
+                }
+            }
         }
     }
 
@@ -154,20 +165,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             return this.addTopic<T>(topicsKey, id).asObservable();
         } else {
             console.log(`[${Date()}] Can't add EventListener. Type of event is "undefined".`);
-        }
-    }
-
-
-    /*
-    * unsubscribe method
-    * */
-    public removeEventListener(topics: string | string[], id?: number): void {
-        if (topics) {
-            const topicsKey = typeof topics === 'string' ? topics : topics.join('/');  // one or multiple
-
-            return this.removeTopic(topicsKey, id);
-        } else {
-            console.log(`[${Date()}] Can't remove EventListener. Type of event is "undefined".`);
         }
     }
 

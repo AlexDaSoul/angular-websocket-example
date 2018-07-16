@@ -1,3 +1,5 @@
+import Dexie from 'dexie';
+
 import { IMessage, IWsMessage } from './websocket.interfaces';
 import { WS_API } from './websocket.events';
 
@@ -5,6 +7,20 @@ import { WS_API } from './websocket.events';
 export class Message implements IMessage {
     constructor(public id: number, public text: string) {
     }
+}
+
+export class Messages {
+
+    private dexie: Dexie;
+
+    public messages: IMessage[];
+
+    constructor() {
+        this.dexie = new Dexie('MessagesDB');
+
+        console.log(this.dexie);
+    }
+
 }
 
 export const modelParser = (message: IWsMessage) => {

@@ -3,13 +3,13 @@ import { Observable, Subject } from 'rxjs';
 
 export interface IWebsocketService {
     addEventListener<T>(topics: string[], id?: number): Observable<T>;
-    removeEventListener(topics: string | string[], id?: number): void;
     sendMessage(event: string, data: any): void;
 }
 
 export interface WebSocketConfig {
     url: string;
     ignore?: string[];
+    garbageCollectInterval?: number;
     options?: Options;
 }
 
