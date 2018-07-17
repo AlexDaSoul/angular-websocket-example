@@ -53,6 +53,7 @@ export interface IWebsocketService {
 export interface WebSocketConfig {
     url: string;
     ignore?: string[];
+    garbageCollectInterval?: number;
     options?: Options;
 }
 

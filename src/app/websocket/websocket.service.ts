@@ -62,6 +62,36 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             // dispatch message to subscribers
             this.onMessage(event);
         });
+
+        setInterval(() => {
+            this.garbageCollect(); // remove subjects without subscribe
+        }, (this.wsConfig.garbageCollectInterval || 10000));
+    }
+
+
+    /*
+    * garbage collector
+    * */
+    private garbageCollect(): void {
+        for (const event in this.listeners) {
+            if (this.listeners.hasOwnProperty(event)) {
+                const topic = this.listeners[event];
+
+                for (const key in topic) {
+                    if (topic.hasOwnProperty(key)) {
+                        const subject = topic[key];
+
+                        if (!subject.observers.length) { // if not subscribes
+                            delete topic[key];
+                        }
+                    }
+                }
+
+                if (!Object.keys(topic).length) { // if not subjects
+                    delete this.listeners[event];
+                }
+            }
+        }
     }
 
 
