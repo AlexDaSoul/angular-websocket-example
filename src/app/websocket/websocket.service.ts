@@ -1,10 +1,9 @@
 import { Injectable, OnDestroy, Inject } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable } from 'rxjs';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { sha256 } from 'js-sha256';
-import Dexie from 'dexie';
 
-import { IMessage, ITopic, IWebsocketService, WebSocketConfig } from './websocket.interfaces';
+import { IListeners, IMessage, ITopic, IWebsocketService, MessageSubject, WebSocketConfig } from './websocket.interfaces';
 import { config } from './websocket.config';
 import { WS_API } from './websocket.events';
 import { modelParser } from './websocket.models';
@@ -15,13 +14,14 @@ import { modelParser } from './websocket.models';
 })
 export class WebsocketService implements IWebsocketService, OnDestroy {
 
-    private listeners: { [topic: string]: ITopic<any> };
+    private listeners: IListeners;
     private uniqueId: number;
     private websocket: ReconnectingWebSocket;
 
     constructor(@Inject(config) private wsConfig: WebSocketConfig) {
         this.uniqueId = -1;
         this.listeners = {};
+        this.wsConfig.ignore = wsConfig.ignore ? wsConfig.ignore : [];
 
         // run connection
         this.connect();
@@ -62,10 +62,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             // dispatch message to subscribers
             this.onMessage(event);
         });
-
-        setInterval(() => {
-            this.garbageCollect(); // remove subjects without subscribe
-        }, (this.wsConfig.garbageCollectInterval || 10000));
     }
 
 
@@ -95,7 +91,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
         const message = JSON.parse(event.data);
 
         for (const name in this.listeners) {
-            if (this.listeners.hasOwnProperty(name) && !(this.wsConfig.ignore || []).includes(message.event)) {
+            if (this.listeners.hasOwnProperty(name) && !this.wsConfig.ignore.includes(name)) {
                 const topic = this.listeners[name];
                 const keys = name.split('/'); // if multiple events
                 const isMessage = keys.includes(message.event);
@@ -114,7 +110,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
     /*
     * add topic for subscribers
     * */
-    private addTopic<T>(topic: string, id?: number): Subject<T> {
+    private addTopic<T>(topic: string, id?: number): MessageSubject<T> {
         const token = (++this.uniqueId).toString(); // token for personal subject
         const key = id ? token + id : token; // id for more personal subject
         const hash = sha256.hex(key); // set hash for personal
@@ -128,33 +124,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             console.log(`[${Date()}] addEventListener try's to add duplicate callback function for event \ ${filterKey} \.`);
         }
 
-        return this.listeners[topic][hash] = new Subject<T>();
-    }
-
-
-    /*
-    * garbage collector
-    * */
-    private garbageCollect(): void {
-        for (const event in this.listeners) {
-            if (this.listeners.hasOwnProperty(event)) {
-                const topic = this.listeners[event];
-
-                for (const key in topic) {
-                    if (topic.hasOwnProperty(key)) {
-                        const subject = topic[key];
-
-                        if (!subject.observers.length) { // if not subscribes
-                            delete topic[key];
-                        }
-                    }
-                }
-
-                if (!Object.keys(topic).length) { // if not subjects
-                    delete this.listeners[event];
-                }
-            }
-        }
+        return this.listeners[topic][hash] = new MessageSubject<T>(this.listeners, topic, hash);
     }
 
 
@@ -180,6 +150,32 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
             this.websocket.send(JSON.stringify({event, data}));
         } else {
             console.log('Send error!');
+        }
+    }
+
+
+    /*
+    * runtime add ignore list
+    * */
+    public runtimeIgnore(topics: string[]): void {
+        if (topics && topics.length) {
+            this.wsConfig.ignore.push(...topics);
+        }
+    }
+
+
+    /*
+    * runtime remove from ignore list
+    * */
+    public runtimeRemoveIgnore(topics: string[]): void {
+        if (topics && topics.length) {
+            topics.forEach((topic: string) => {
+                const topicIndex = this.wsConfig.ignore.findIndex(t => t === topic); // find topic in ignore list
+
+                if (topicIndex > -1) {
+                    this.wsConfig.ignore.splice(topicIndex, 1);
+                }
+            });
         }
     }
 

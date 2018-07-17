@@ -48,7 +48,6 @@ import { WebsocketModule } from './websocket';
         WebsocketModule.config({
             url: 'http:localhost:8080', // websocket url
 			ignore: [WS_API.EVENTS.MESSAGES], // ignore events
-			garbageCollectInterval: 30000, // remove topics without subscribes. default 10000
 			options: { // ReconnectingWebSocket
 				connectionTimeout: 5000,
 				maxRetries: 10
