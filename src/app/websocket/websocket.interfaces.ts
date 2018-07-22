@@ -79,3 +79,5 @@ export interface IMessage {
     id: number;
     text: string;
 }
+
+export type ITopicDataType = IMessage[] | number | string[];

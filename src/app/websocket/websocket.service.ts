@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 import ReconnectingWebSocket from 'reconnecting-websocket';
 import { sha256 } from 'js-sha256';
 
-import { IListeners, IMessage, ITopic, IWebsocketService, MessageSubject, WebSocketConfig } from './websocket.interfaces';
+import { IListeners, ITopic, ITopicDataType, IWebsocketService, MessageSubject, WebSocketConfig } from './websocket.interfaces';
 import { config } from './websocket.config';
 import { WS_API } from './websocket.events';
 import { modelParser } from './websocket.models';
@@ -129,7 +129,7 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
 
                 if (isMessage && typeof model !== 'undefined') {
                     model.then(data => {
-                        this.callMessage<IMessage[] | number | string[]>(topic, data);
+                        this.callMessage<ITopicDataType>(topic, data);
                     });
                 }
             }
