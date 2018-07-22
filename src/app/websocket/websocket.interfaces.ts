@@ -6,7 +6,8 @@ export class MessageSubject<T> extends Subject<T> {
     constructor(
         private listeners: IListeners,
         private topic: string,
-        private id: string) {
+        private id: string
+    ) {
         super();
     }
 

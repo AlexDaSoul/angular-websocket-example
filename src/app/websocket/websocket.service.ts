@@ -122,13 +122,14 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
 
         for (const name in this.listeners) {
             if (this.listeners.hasOwnProperty(name) && !this.wsConfig.ignore.includes(name)) {
+
                 const topic = this.listeners[name];
                 const keys = name.split('/'); // if multiple events
                 const isMessage = keys.includes(message.event);
                 const model = modelParser(message); // get model
 
                 if (isMessage && typeof model !== 'undefined') {
-                    model.then(data => {
+                    model.then((data: ITopicDataType) => {
                         this.callMessage<ITopicDataType>(topic, data);
                     });
                 }
@@ -147,11 +148,6 @@ export class WebsocketService implements IWebsocketService, OnDestroy {
 
         if (!this.listeners[topic]) {
             this.listeners[topic] = <any>{};
-        }
-
-        if (this.listeners[topic][hash]) { // if double subscribe to one subject
-            const filterKey = Object.keys(WS_API.EVENTS).filter(k => WS_API.EVENTS[k] === topic)[0];
-            console.log(`[${Date()}] addEventListener try's to add duplicate callback function for event \ ${filterKey} \.`);
         }
 
         return this.listeners[topic][hash] = new MessageSubject<T>(this.listeners, topic, hash);
