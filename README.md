@@ -14,7 +14,7 @@ $ npm run server
 
 ## Example
 
-#### Add WebSockets on your project
+#### Add WebSockets to your project
 
 > in app module
 
