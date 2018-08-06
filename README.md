@@ -1,6 +1,6 @@
 # Angular Websocket Example
 
-> Angular service for WebSocket. Used Rx WebSocketSubject
+> Angular service for WebSocket with Rx WebSocketSubject
 
 ## Installation
 For angular 6:
